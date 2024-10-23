@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizza Cashier</title>
+    <style>
+        body {
+        font-family: Arial, sans-serif;
+        background-image: url(Untitled\ design.png); 
+        background-size: cover; 
+        background-position: center; 
+        margin: 0;
+        padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #e9ecef;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pizza Cashier</h1>
+
+        <!-- Staff Selection -->
+        <h2>Select Staff</h2>
+        <select id="staff-select">
+            <option value="" disabled selected>Select Staff</option>
+            <option value="John">John</option>
+            <option value="Emily">Emily</option>
+            <option value="Michael">Michael</option>
+        </select>
+
+        <!-- Pizza Order Form -->
+        <h2>Select Pizza</h2>
+        <select id="pizza-select">
+            <option value="" disabled selected>Select a Pizza</option>
+            <option value="Margherita">Margherita</option>
+            <option value="Pepperoni">Pepperoni</option>
+            <option value="BBQ Chicken">BBQ Chicken</option>
+            <option value="Veggie">Veggie</option>
+            <option value="Hawaiian">Hawaiian</option>
+            <option value="Meat Lover">Meat Lover</option>
+        </select>
+
+        <!-- Pizza Size Selection -->
+        <div>
+            <label><input type="radio" name="size" value="Small" checked> Small</label>
+            <label><input type="radio" name="size" value="Medium"> Medium</label>
+            <label><input type="radio" name="size" value="Large"> Large</label>
+        </div>
+
+        <input type="number" id="quantity" placeholder="Quantity" value="1" min="1">
+        <button id="add-button">Add Item</button>
+
+        <!-- Order Summary -->
+        <h2>Order Summary</h2>
+        <ul id="item-list-ul"></ul>
+        <div>Total: $<span id="total-price">0.00</span></div>
+
+        <!-- Order History -->
+        <h2>Order History for <span id="staff-name"></span></h2>
+        <ul id="history-list"></ul>
+    </div>
+
+    <script>
+        const pizzas = {
+            "Margherita": { "Small": 8, "Medium": 10, "Large": 12, stock: 5 },
+            "Pepperoni": { "Small": 10, "Medium": 12, "Large": 14, stock: 3 },
+            "BBQ Chicken": { "Small": 12, "Medium": 15, "Large": 18, stock: 4 },
+            "Veggie": { "Small": 7, "Medium": 9, "Large": 11, stock: 6 },
+            "Hawaiian": { "Small": 9, "Medium": 11, "Large": 13, stock: 4 },
+            "Meat Lover": { "Small": 13, "Medium": 16, "Large": 19, stock: 3 }
+        };
+
+        const staffHistory = { "John": [], "Emily": [], "Michael": [] };
+        let orderItems = [];
+        let total = 0;
+
+        function updateOrderSummary() {
+            const pizza = document.getElementById('pizza-select').value;
+            const size = document.querySelector('input[name="size"]:checked').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const price = pizza ? pizzas[pizza][size] : 0;
+            if (pizza && size && quantity > 0) {
+                const totalPrice = price * quantity;
+                document.getElementById('total-price').textContent = (total + totalPrice).toFixed(2);
+            }
+        }
+
+        function addOrder() {
+            const pizza = document.getElementById('pizza-select').value;
+            const size = document.querySelector('input[name="size"]:checked').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const price = pizzas[pizza][size];
+            if (pizza && size && quantity > 0 && quantity <= pizzas[pizza].stock) {
+                const itemTotal = price * quantity;
+                orderItems.push({ pizza, size, price, quantity, itemTotal });
+                pizzas[pizza].stock -= quantity;
+                updateOrderList();
+                updateTotal();
+                addOrderToStaffHistory();
+            }
+        }
+
+        function updateOrderList() {
+            const list = document.getElementById('item-list-ul');
+            list.innerHTML = '';
+            orderItems.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${item.pizza} (${item.size}) - $${item.price} x ${item.quantity} = $${item.itemTotal.toFixed(2)}`;
+                list.appendChild(listItem);
+            });
+        }
+
+        function updateTotal() {
+            total = orderItems.reduce((sum, item) => sum + item.itemTotal, 0);
+            document.getElementById('total-price').textContent = total.toFixed(2);
+        }
+
+        function addOrderToStaffHistory() {
+            const staff = document.getElementById('staff-select').value;
+            if (staff) {
+                staffHistory[staff].push(...orderItems);
+                displayStaffHistory(staff);
+            }
+        }
+
+        function displayStaffHistory(staff) {
+            document.getElementById('staff-name').textContent = staff;
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            if (staffHistory[staff].length > 0) {
+                staffHistory[staff].forEach(order => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${order.pizza} (${order.size}) - $${order.price} x ${order.quantity}`;
+                    historyList.appendChild(listItem);
+                });
+            } else {
+                historyList.innerHTML = '<li>No orders yet.</li>';
+            }
+        }
+
+        document.getElementById('add-button').addEventListener('click', addOrder);
+        document.getElementById('staff-select').addEventListener('change', function() {
+            displayStaffHistory(this.value);
+        });
+
+        window.onload = function() {
+            const storedOrderItems = JSON.parse(localStorage.getItem('orderItems')) || [];
+            const storedTotal = parseFloat(localStorage.getItem('total')) || 0;
+            orderItems = storedOrderItems;
+            total = storedTotal;
+            updateOrderList();
+            updateTotal();
+        };
+    </script>
+</body>
+</html>
